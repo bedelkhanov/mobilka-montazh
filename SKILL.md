@@ -9,9 +9,17 @@ description: Мобилка монтаж — монтаж вертикально
 
 ## 0. Движок
 
-Движок — `mm.py` и `overlay.html` рядом с этим файлом. Шрифты и модель `setup` скачивает в `assets/`, звуковые эффекты лежат в `sfx/`.
+Движок — `mm.py`, `overlay.html`, `vstavki.md` и звуки `sfx/`. **Всегда бери свежую версию с GitHub** — даже если рядом с этим файлом лежит своя копия (она может быть старой). Шрифты и модели `setup` скачивает в `assets/`.
 
-1. `MM=<папка этого SKILL.md>`. Если `$MM/mm.py` нет — возьми движок из публичного репозитория: `git clone --depth 1 https://github.com/bedelkhanov/mobilka-montazh ~/mobilka-montazh || git -C ~/mobilka-montazh pull; MM=~/mobilka-montazh`. Если клон не прошёл, а в чат прикреплён `mobilka-montazh.zip` — `unzip -o <zip> -d ~ && MM=~/mobilka-montazh`.
+1. Загрузить движок — каждый раз в начале монтажа, одной командой:
+   ```bash
+   REPO=https://github.com/bedelkhanov/mobilka-montazh
+   if git clone -q --depth 1 "$REPO" ~/mobilka-montazh 2>/dev/null || git -C ~/mobilka-montazh pull -q --ff-only; then MM=~/mobilka-montazh
+   elif [ -f "<папка этого SKILL.md>/mm.py" ]; then MM="<папка этого SKILL.md>"      # GitHub недоступен — локальная копия
+   fi
+   ```
+   GitHub недоступен и локальной копии нет — если в чат прикреплён `mobilka-montazh.zip`: `unzip -o <zip> -d ~ && MM=~/mobilka-montazh`; иначе попроси его прикрепить. Если движок взят не с GitHub — скажи об этом в ответе.
+   После загрузки прочитай `$MM/SKILL.md` с GitHub: если он новее этого файла, работай по нему.
 2. `python3 $MM/mm.py setup` — ставит faster-whisper, mediapipe, playwright, скачивает шрифты (Inter, Noto Serif Display) и модель вырезки; Chrome берёт системный.
 3. Видео — файл, который прислали в чат. Работать в отдельной папке `W=~/reel` (не в папке скила).
 
