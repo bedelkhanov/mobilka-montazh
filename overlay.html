@@ -257,6 +257,7 @@ ${days.map((l, i) => { const last = i === days.length - 1 && d.last_accent !== f
 <div class="rd" style="left:0;top:54px;width:266px;height:12px"></div><div class="rd" style="left:64px;top:0;width:12px;height:122px"></div><div class="rd" style="left:146px;top:0;width:12px;height:122px"></div><div class="zone"></div>
 <svg class="pin" viewBox="0 0 20 26"><path d="M10 25 C 4 17, 1 13, 1 9 A 9 9 0 0 1 19 9 C 19 13, 16 17, 10 25 Z" fill="#151515"/><circle cx="10" cy="9" r="3.4" fill="#F2DB5A"/></svg><span class="mlab">${E(d.label || '')}</span></div>`;
   },
+  broll(d) { return ''; },            // видео рисует движок (mm.py), здесь только субтитры
   folder(d) {
     const th = d.thumbs || [], P = [[6, 10, 150, 40, -8, .3], [24, 70, 132, -14, 6, .6], [74, 36, 84, 14, -3, .9]];
     return `<div class="farea">${P.slice(0, Math.max(1, th.length)).map((p, i) => `<div class="fclip" style="left:${p[0]}px;top:${p[1]}px;--dx:${p[2]}px;--dy:${p[3]}px;--r:${p[4]}deg;animation-delay:${p[5]}s">${IMG(th[i])}</div>`).join('')}
@@ -303,7 +304,9 @@ function seek(t) {
     capRoot.innerHTML = c ? `<span class="pop ${c.accent ? 'a' : 'w'}">${E(c.text)}</span>` : '';
     curCap = c;
   }
-  if (ins) { capRoot.className = 'cap ink'; capRoot.style.height = '250px'; }
+  const fullB = ins && ins.type === 'broll' && ((ins.data || {}).mode || 'full') === 'full';
+  if (fullB) { capRoot.className = 'cap'; capRoot.style.height = '450px'; }   // перебивка на весь экран: белое слово ниже центра (y≈1350)
+  else if (ins) { capRoot.className = 'cap ink'; capRoot.style.height = '250px'; }
   else {
     capRoot.className = 'cap';
     let b = headTop(c ? c.start : t) - 12;

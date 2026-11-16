@@ -10,6 +10,7 @@
 
 | Тип | Когда ставить | `data` |
 | --- | --- | --- |
+| `broll` | Живая перебивка: место, действие, предмет, событие | `name` (из `mm.py broll --name`) или `file`, `from`, `mode: full\|card`, `zoom?`, `y?` |
 | `title` | Хук в первые 2–3 с, смена темы | `lines: [{t, accent?, at?}]` — 2–4 строки, одна `accent` |
 | `cards` | «снимаю», «дубли», «вот мои ролики», примеры | `thumbs: [сек, сек, сек]`, `tags: ["дубль 1", ...]` |
 | `dark_card` | Обещание, вывод, «ты получишь…» | `lines: [{t, accent?}]` — 2–3 строки |
@@ -35,6 +36,8 @@
 {"type": "chat", "start": 12.7, "end": 15.8, "data": {"question": "смонтируй мне рилс", "answer": "Готово: 27 сек, 4 вставки", "sub": "субтитры, паузы, анимации"}}
 {"type": "notifications", "start": 8.0, "end": 11.0, "data": {"items": [{"title": "Новая заявка", "sub": "из рилса · Айгерим"}, {"icon": "₸", "title": "Оплата 9 900 ₸", "sub": "консультация", "accent": true}, {"title": "Новая заявка", "sub": "из рилса · Ерлан"}]}}
 {"type": "before_after", "start": 20.0, "end": 23.0, "data": {"before": {"num": 2, "unit": "заявки в неделю"}, "after": {"num": 37, "unit": "заявок в неделю"}}}
+{"type": "broll", "start": 2.6, "end": 3.9, "data": {"name": "jbr", "from": 1.0, "mode": "full"}}
+{"type": "broll", "start": 16.3, "end": 19.2, "data": {"name": "jbr", "from": 9.0, "mode": "card"}}
 {"type": "funnel", "start": 4.0, "end": 7.0, "data": {"rows": [{"label": "показы", "value": "10 000"}, {"label": "клики", "value": "800"}, {"label": "заявки", "value": "64"}, {"label": "продажи", "value": "12"}]}}
 ```
 

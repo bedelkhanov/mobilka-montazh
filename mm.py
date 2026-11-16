@@ -7,6 +7,8 @@
   transcribe WORK               — слова с таймкодами (faster-whisper large-v3)
   cut WORK [--speed 1.1] [--drop 12.3-14.0 ...]
                                 — вырезать паузы и куски, собрать cut.mp4 + voice.wav, пересчитать слова
+  broll WORK URL|FILE --name N [--start s --end s]
+                                — живая перебивка из TikTok (или файл из чата) → broll/N.mp4
   analyze WORK                  — где верх головы на каждом кадре (для субтитров и вставок)
   plan WORK                     — черновик plan.json: карточки субтитров по словам
   render WORK [--out F]          — слой текста/вставок (Chrome) + сборка кадра + эффекты → готовый mp4
@@ -235,15 +237,18 @@ def person_mask(rgb_small):
     return r.confidence_masks[-1].numpy_view().copy()
 
 
-def frames(path, w=W, h=H, fps=None):
+def frames(path, w=W, h=H, fps=None, ss=None, vf=None):
     import numpy as np
-    vf = f'scale={w}:{h}' + (f',fps={fps}' if fps else '')
-    p = subprocess.Popen(['ffmpeg', '-v', 'error', '-i', str(path), '-vf', vf, '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], stdout=subprocess.PIPE)
-    while True:
-        b = p.stdout.read(w * h * 3)
-        if len(b) < w * h * 3: break
-        yield np.frombuffer(b, np.uint8).reshape(h, w, 3)
-    p.kill()
+    vf = vf or (f'scale={w}:{h}' + (f',fps={fps}' if fps else ''))
+    pre = ['-ss', f'{ss:.3f}'] if ss else []
+    p = subprocess.Popen(['ffmpeg', '-v', 'error', *pre, '-i', str(path), '-vf', vf, '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], stdout=subprocess.PIPE)
+    try:
+        while True:
+            b = p.stdout.read(w * h * 3)
+            if len(b) < w * h * 3: break
+            yield np.frombuffer(b, np.uint8).reshape(h, w, 3)
+    finally:
+        p.kill(); p.wait()
 
 
 # ---------------------------------------------------------------- analyze
@@ -290,6 +295,35 @@ def cmd_plan(a):
     print(f'plan ok: {len(cards)} карточек. Теперь отметь accent и добавь inserts.')
 
 
+# ---------------------------------------------------------------- broll
+def cmd_broll(a):
+    """Живая перебивка: ссылка TikTok (или другой сайт, который берёт yt-dlp) либо файл из чата → broll/NAME.mp4 (1080x1920, 30 fps, без звука)."""
+    work = Path(a.work).resolve(); bd = work / 'broll'; bd.mkdir(parents=True, exist_ok=True)
+    raw = bd / f'{a.name}_src.mp4'
+    if Path(a.src).exists():
+        shutil.copy(a.src, raw)
+    else:
+        try:
+            import yt_dlp  # noqa
+        except ImportError:
+            sh([sys.executable, '-m', 'pip', 'install', '-q', '--break-system-packages', 'yt-dlp'])
+        if raw.exists(): raw.unlink()
+        # без водяного знака TikTok: формат "download" — с вотермаркой, его не берём
+        sh([sys.executable, '-m', 'yt_dlp', '-q', '--no-warnings', '--no-playlist', '-f', 'best[format_id!=download][vcodec!=none]/best',
+            '-o', str(raw), a.src])
+    cut = []
+    if a.start: cut += ['-ss', str(a.start)]
+    if a.end: cut += ['-to', str(a.end)]
+    out = bd / f'{a.name}.mp4'
+    vf = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1'
+    sh(['ffmpeg', '-v', 'error', '-y', *cut, '-i', str(raw), '-vf', vf, '-an', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', '-pix_fmt', 'yuv420p', str(out)])
+    d = ffprobe_dur(out)
+    sheet = bd / f'{a.name}_sheet.jpg'
+    sh(['ffmpeg', '-v', 'error', '-y', '-i', str(out), '-vf', f'fps={min(2, 16 / max(d, 1)):.3f},scale=180:-2,drawtext=text=%{{pts}}:x=4:y=4:fontsize=14:fontcolor=white:box=1:boxcolor=black@0.5,tile=8x2',
+        '-frames:v', '1', str(sheet)])
+    print(f'broll ok: {out.relative_to(work)} — {d:.1f} с. Кадры: {sheet}')
+
+
 # ---------------------------------------------------------------- render
 def export_thumbs(work, plan):
     """data.thumbs: [секунды в cut.mp4] → пути к jpg"""
@@ -328,6 +362,72 @@ def render_overlay(work, plan, nf):
 
 def ease(x):
     x = min(max(x, 0.0), 1.0); return 1 - (1 - x) ** 3
+
+
+BR_X0, BR_Y0, BR_X1, BR_Y1, BR_R = 141, 276, 939, 630, 48     # карточка перебивки во вставке-карточке
+
+
+def _broll_next(work, ins, t, w, h):
+    """Следующий кадр перебивки нужного размера (поток открывается на входе во вставку)."""
+    import numpy as np
+    d = ins.get('data', {}) or {}
+    if '_it' not in ins:
+        f = d.get('file') or f"broll/{d.get('name', 'b1')}.mp4"
+        f = Path(f) if Path(f).is_absolute() else work / f
+        z = float(d.get('zoom', 1.0)); fy = float(d.get('y', 0.5))
+        sw, shh = int(round(w * z / 2) * 2), int(round(h * z / 2) * 2)
+        vf = (f'scale={sw}:{shh}:force_original_aspect_ratio=increase,'
+              f'crop={w}:{h}:(iw-{w})/2:(ih-{h})*{fy},fps=30,setsar=1')
+        ins['_it'] = frames(f, w, h, ss=float(d.get('from', 0)) + (t - ins['start']), vf=vf); ins['_last'] = None
+    try:
+        ins['_last'] = next(ins['_it'])
+    except StopIteration:
+        pass                                   # клип короче вставки — держим последний кадр
+    return ins['_last'] if ins['_last'] is not None else np.zeros((h, w, 3), np.uint8)
+
+
+def broll_frame(work, ins, t, fr, stage, fmask, shadow, fw, fh):
+    """mode=full — перебивка на весь экран (медленный наезд); mode=card — белый фон, спикер в рамке, видео в карточке сверху."""
+    import numpy as np, cv2
+    d = ins.get('data', {}) or {}; lt = t - ins['start']; dur = ins['end'] - ins['start']
+    if d.get('mode', 'full') == 'full':
+        f = _broll_next(work, ins, t, W, H).astype(np.float32) / 255
+        k = 1 + 0.05 * min(1, lt / max(dur, 0.1))                       # наезд 1.00 → 1.05
+        if k > 1.001:
+            M = np.float32([[k, 0, (1 - k) * W / 2], [0, k, (1 - k) * H / 2]])
+            f = cv2.warpAffine(f, M, (W, H), flags=cv2.INTER_LINEAR)
+        return f
+    # карточка: та же сцена, что у остальных вставок, + видео в скруглённой карточке
+    pa = ease(lt / 0.25); pf = ease(lt / 0.4); pc = ease((lt - 0.1) / 0.35)
+    base = fr.astype(np.float32) / 255
+    can = stage.copy() * (1 - shadow * pf)
+    sw_, shh = fw, int(round(H * SCALE))
+    sp = cv2.resize(fr, (sw_, shh), interpolation=cv2.INTER_AREA).astype(np.float32) / 255
+    ty = int(round(HEAD_Y - ins['_head'] * SCALE)) + int(round(180 * (1 - pf)))
+    rows = np.clip(np.arange(FY0, H) - ty, 0, shh - 1)
+    a_ = fmask * pf
+    can[FY0:, FX0:FX1] = can[FY0:, FX0:FX1] * (1 - a_) + sp[rows] * a_
+    top_rows = np.arange(0, FY0) - ty; okt = (top_rows >= 0) & (top_rows < shh)
+    if okt.any():
+        m = person_mask(cv2.resize(fr, (256, 455), interpolation=cv2.INTER_AREA))
+        m = np.clip((cv2.GaussianBlur(cv2.resize(m, (sw_, shh)), (0, 0), 2.0) - 0.35) / 0.3, 0, 1)
+        ys = np.where(okt)[0]; al = m[top_rows[ys]][..., None] * pf
+        can[ys, FX0:FX1] = can[ys, FX0:FX1] * (1 - al) + sp[top_rows[ys]] * al
+    cw, ch = BR_X1 - BR_X0, BR_Y1 - BR_Y0
+    v = _broll_next(work, ins, t, cw, ch).astype(np.float32) / 255
+    if '_cmask' not in ins:
+        cm = np.zeros((ch, cw), np.uint8)
+        cv2.rectangle(cm, (BR_R, 0), (cw - 1 - BR_R, ch - 1), 255, -1); cv2.rectangle(cm, (0, BR_R), (cw - 1, ch - 1 - BR_R), 255, -1)
+        for cx in (BR_R, cw - 1 - BR_R):
+            for cy in (BR_R, ch - 1 - BR_R): cv2.circle(cm, (cx, cy), BR_R, 255, -1, lineType=cv2.LINE_AA)
+        sh_ = np.zeros((H, W), np.float32); sh_[BR_Y0 + 24:BR_Y1 + 24, BR_X0 + 10:BR_X1 - 10] = 0.16
+        ins['_cmask'] = (cm.astype(np.float32) / 255)[..., None]; ins['_cshadow'] = cv2.GaussianBlur(sh_, (0, 0), 26)[..., None]
+    dy = int(round(-40 * (1 - pc)))
+    can = can * (1 - ins['_cshadow'] * pc)
+    y0 = BR_Y0 + dy; y1 = y0 + ch
+    a2 = ins['_cmask'] * pc
+    can[y0:y1, BR_X0:BR_X1] = can[y0:y1, BR_X0:BR_X1] * (1 - a2) + v * a2
+    return base * (1 - pa) + can * pa
 
 
 def cmd_render(a):
@@ -372,6 +472,9 @@ def cmd_render(a):
         t = n / FPS
         base = fr.astype(np.float32) / 255
         ins = next((i for i in ins_list if i['start'] <= t < i['end']), None)
+        if ins and ins['type'] == 'broll':
+            base = broll_frame(work, ins, t, fr, stage, fmask, shadow, fw, fh)
+            ins = None
         if ins:
             lt = t - ins['start']
             pa = ease(lt / 0.25); pf = ease(lt / 0.4)
@@ -467,6 +570,8 @@ def insert_sfx(ins):
         ev += [(0.9, CLICK)]
     elif ty == 'timeline':
         ev += [(0.6, TICKS)]
+    elif ty == 'broll':
+        ev = [(0.0, CLICK)]
     return [(ins['start'] + t, f) for t, f in ev if ins['start'] + t < ins['end'] - 0.1]
 
 
@@ -544,6 +649,8 @@ def main():
     p = sp.add_parser('cut'); p.add_argument('work'); p.add_argument('--speed', type=float, default=1.0)
     p.add_argument('--drop', nargs='*'); p.add_argument('--pad', type=float, default=0.06); p.add_argument('--gap', type=float, default=0.16)
     p.add_argument('--prompt', default=''); p.add_argument('--lang', default=None)
+    p = sp.add_parser('broll'); p.add_argument('work'); p.add_argument('src', help='ссылка TikTok или путь к файлу')
+    p.add_argument('--name', default='b1'); p.add_argument('--start', type=float); p.add_argument('--end', type=float)
     p = sp.add_parser('analyze'); p.add_argument('work')
     p = sp.add_parser('plan'); p.add_argument('work'); p.add_argument('--force', action='store_true')
     p = sp.add_parser('render'); p.add_argument('work'); p.add_argument('--out'); p.add_argument('--skip-overlay', action='store_true')
@@ -552,7 +659,7 @@ def main():
     p = sp.add_parser('sheet'); p.add_argument('work'); p.add_argument('--file')
     a = ap.parse_args()
     {'setup': cmd_setup, 'prep': cmd_prep, 'transcribe': cmd_transcribe, 'cut': cmd_cut, 'analyze': cmd_analyze,
-     'plan': cmd_plan, 'render': cmd_render, 'sheet': cmd_sheet, 'sfx': cmd_sfx}[a.cmd](a)
+     'plan': cmd_plan, 'broll': cmd_broll, 'render': cmd_render, 'sheet': cmd_sheet, 'sfx': cmd_sfx}[a.cmd](a)
 
 
 if __name__ == '__main__':
