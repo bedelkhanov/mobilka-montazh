@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Мобилка монтаж — слой текста и вставок</title>
+<style>
+@font-face{font-family:"InterR";src:url(assets/fonts/InterDisplay-Regular.otf);font-weight:400}
+@font-face{font-family:"InterS";src:url(assets/fonts/Inter-SemiBold.otf);font-weight:600}
+@font-face{font-family:"InterM";src:url(assets/fonts/Inter-Medium.otf);font-weight:500}
+@font-face{font-family:"SerifC";src:url(assets/fonts/NotoSerifDisplay-Italic.ttf);font-style:italic;font-weight:100 900;font-stretch:62.5% 100%}
+html,body{margin:0;padding:0;width:360px;height:640px;background:transparent;overflow:hidden}
+#root{position:relative;width:360px;height:640px;overflow:hidden}
+[data-at]{visibility:hidden}
+
+/* ---------- субтитры ---------- */
+.cap{position:absolute;left:53px;right:53px;top:0;display:flex;align-items:flex-end;justify-content:center;text-align:center;line-height:1}
+.w{font-family:InterR;font-weight:400;font-size:30px;letter-spacing:-0.03em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4),0 2px 12px rgba(0,0,0,.35)}
+.a{font-family:SerifC;font-style:italic;font-stretch:62.5%;font-variation-settings:"wdth" 62.5,"wght" 400;font-size:44px;letter-spacing:-0.01em;color:#F2DB5A;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.ink .w{color:#151515;text-shadow:none}
+.ink .a{color:#151515;text-shadow:none;background:linear-gradient(transparent 56%,#F2DB5A 56%,#F2DB5A 90%,transparent 90%);padding:0 6px}
+.pop{display:inline-block;animation:pop .16s cubic-bezier(.2,.9,.3,1.35) both}
+.pop.a{animation:popa .28s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes pop{from{transform:scale(.86);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes popa{from{transform:translateY(8px) scale(.92);opacity:0;filter:blur(4px)}to{transform:none;opacity:1;filter:blur(0)}}
+
+/* ---------- общее для вставок ---------- */
+.card{position:absolute;box-sizing:border-box;background:#fff;border:1px solid #ECE9E2;border-radius:16px;box-shadow:0 10px 26px rgba(0,0,0,.08);animation:cin .4s .12s cubic-bezier(.2,.85,.25,1.12) both}
+@keyframes cin{from{transform:translateY(-18px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+.lbl{font-family:InterS;font-size:11px;color:#8a857d}
+.ink-t{font-family:InterR;color:#151515;letter-spacing:-0.02em}
+.mk{background:linear-gradient(transparent 52%,#F2DB5A 52%,#F2DB5A 92%,transparent 92%);padding:0 4px}
+.popin{animation:pop .22s ease-out both}
+
+/* заголовок-стопка */
+.ttl{position:absolute;left:53px;right:53px;top:96px;text-align:center;line-height:.98}
+.ttl .ln{display:block;animation:ln .22s cubic-bezier(.2,.9,.3,1.25) both}
+.ttl .tw{font-family:InterR;font-size:32px;letter-spacing:-0.03em;color:#151515}
+.ttl .ta{font-family:SerifC;font-style:italic;font-stretch:62.5%;font-variation-settings:"wdth" 62.5,"wght" 400;font-size:48px;color:#151515;background:linear-gradient(transparent 56%,#F2DB5A 56%,#F2DB5A 90%,transparent 90%);padding:0 6px}
+@keyframes ln{from{transform:translateY(12px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+
+/* карточки */
+.tc{position:absolute;width:68px;height:118px;border-radius:12px;overflow:hidden;box-shadow:0 10px 22px rgba(0,0,0,.22);background:#111;animation:fly .5s cubic-bezier(.2,.85,.25,1.15) both}
+.tc img{width:100%;height:100%;object-fit:cover;display:block}
+.tc .tag{position:absolute;left:5px;bottom:5px;font-family:InterS;font-size:9px;color:#fff;background:rgba(0,0,0,.55);padding:2px 5px;border-radius:5px}
+@keyframes fly{from{transform:translateY(-50px) rotate(calc(var(--r) * 2.4)) scale(.7);opacity:0}to{transform:rotate(var(--r));opacity:1}}
+
+/* тёмная карточка */
+.dcard{position:absolute;left:96px;top:98px;width:168px;height:118px;box-sizing:border-box;padding:14px 18px;border-radius:18px;background:#1c1b1a;box-shadow:0 14px 30px rgba(0,0,0,.25);transform:rotate(-4deg);animation:slide .45s .15s cubic-bezier(.2,.85,.25,1.12) both;display:flex;flex-direction:column;justify-content:center;gap:2px}
+@keyframes slide{from{transform:translateY(-40px) rotate(-14deg) scale(.85);opacity:0}to{transform:rotate(-4deg);opacity:1}}
+.dcard .cl{display:block;animation:pop .2s ease-out both}
+.dcard .cw{font-family:InterR;font-size:19px;letter-spacing:-0.03em;color:#fff;line-height:1.1}
+.dcard .ca{font-family:SerifC;font-style:italic;font-stretch:62.5%;font-variation-settings:"wdth" 62.5,"wght" 400;font-size:32px;color:#F2DB5A;line-height:1}
+
+/* таймлайн */
+.win{position:absolute;left:47px;top:100px;width:266px;border-radius:12px;background:#1d1c1b;box-shadow:0 14px 30px rgba(0,0,0,.25);overflow:hidden;animation:rise .4s .15s cubic-bezier(.2,.85,.25,1.1) both}
+@keyframes rise{from{transform:translateY(-30px) scale(.92);opacity:0}to{transform:none;opacity:1}}
+.win .bar{display:flex;align-items:center;gap:4px;padding:7px 9px;border-bottom:1px solid #2e2c2a}
+.win .dot{width:7px;height:7px;border-radius:50%}
+.win .wt{flex:1;text-align:center;font-family:InterS;font-size:9px;color:#b9b4ac;margin-right:26px}
+.win .ruler{display:flex;justify-content:space-between;padding:5px 10px 0 28px;font-family:InterS;font-size:7px;color:#8d8880}
+.win .trk{display:flex;align-items:center;gap:6px;padding:5px 10px}
+.win .tl{width:12px;font-family:InterS;font-size:8px;color:#8d8880}
+.win .wave{display:flex;align-items:center;gap:2px;height:18px}
+.win .wave span{width:3px;border-radius:2px;background:#F2DB5A}
+.win .clips{display:flex;gap:3px}
+.win .clips img{width:34px;height:26px;object-fit:cover;border-radius:4px;border:1.5px solid #9BE7F2;display:block}
+.win .head{position:absolute;top:40px;bottom:6px;width:2px;background:#fff;left:40px;animation:play 3.2s linear infinite}
+@keyframes play{from{transform:translateX(0)}to{transform:translateX(212px)}}
+
+/* маркер */
+.quote{position:absolute;left:53px;right:53px;top:112px;text-align:center;font-family:InterR;font-size:26px;letter-spacing:-0.03em;line-height:1.3;color:#151515;animation:pop .25s .1s ease-out both}
+.quote .hl{padding:0 5px;border-radius:4px;background:linear-gradient(#9BE7F2,#9BE7F2) no-repeat left center/0% 100%;animation:sweep .35s .6s ease-out forwards}
+@keyframes sweep{to{background-size:100% 100%}}
+
+/* чеклист */
+.row{display:flex;align-items:center;gap:9px;height:22px;font-family:InterR;font-size:14px;letter-spacing:-0.02em;color:#151515}
+.box{width:15px;height:15px;border-radius:50%;border:1.5px solid #CFCBC3;box-sizing:border-box;position:relative;flex:none}
+.tick{position:absolute;left:-1.5px;top:-1.5px;width:15px;height:15px;border-radius:50%;background:#151515;animation:pop .22s cubic-bezier(.2,.9,.3,1.5) both}
+
+/* чат */
+.ub{align-self:flex-end;max-width:190px;background:#EFEDE8;border-radius:12px 12px 4px 12px;padding:6px 10px;font-family:InterR;font-size:12.5px;line-height:1.3;color:#151515;animation:pop .22s ease-out both}
+.dots{display:flex;gap:4px;padding:4px 0}
+.dots span{width:6px;height:6px;border-radius:50%;background:#B9B4AC;animation:bounce .9s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:none}30%{transform:translateY(-4px)}}
+.rep{font-family:InterR;font-size:13px;line-height:1.35;color:#151515;animation:pop .22s ease-out both}
+
+/* уведомления */
+.nt{position:absolute;left:47px;width:266px;height:36px;box-sizing:border-box;padding:0 10px;display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #ECE9E2;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.08);animation:nin .34s cubic-bezier(.2,.85,.25,1.15) both}
+@keyframes nin{from{transform:translateY(-14px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.nt .ic{width:22px;height:22px;border-radius:7px;background:#151515;color:#fff;font-family:InterS;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none}
+.nt .ic.y{background:#F2DB5A;color:#151515}
+.nt .tt{font-family:InterS;font-size:11.5px;color:#151515;line-height:1.15}
+.nt .sb{font-family:InterR;font-size:10px;color:#8a857d;line-height:1.15}
+.nt .tm{margin-left:auto;font-family:InterR;font-size:9px;color:#a8a29a}
+
+/* график */
+.cbar{width:22px;border-radius:6px;background:#151515;transform-origin:bottom center;animation:grow .5s cubic-bezier(.2,.85,.25,1.1) both}
+.cbar.last{background:#F2DB5A}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.big-s{font-family:SerifC;font-style:italic;font-stretch:62.5%;font-variation-settings:"wdth" 62.5,"wght" 400;font-size:30px;line-height:1;color:#151515;animation:pop .3s 1s cubic-bezier(.2,.9,.3,1.4) both}
+
+/* было/стало */
+.tile{position:absolute;top:100px;width:112px;height:106px;box-sizing:border-box;padding:12px 14px;border-radius:16px;display:flex;flex-direction:column;justify-content:space-between;animation:cin2 .4s cubic-bezier(.2,.85,.25,1.15) both}
+@keyframes cin2{from{transform:translateY(-16px) scale(.92);opacity:0}to{transform:none;opacity:1}}
+.tile .nm{font-family:InterR;font-size:46px;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums}
+.tile .un{font-family:InterR;font-size:11px}
+.arr path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .3s .45s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* кольцо */
+.ring{transform:rotate(-90deg)}
+.prog{stroke-dasharray:226;stroke-dashoffset:226;animation:fill 1.4s .35s cubic-bezier(.4,.1,.2,1) forwards}
+@keyframes fill{to{stroke-dashoffset:0}}
+
+/* воронка */
+.fn{height:24px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 11px;box-sizing:border-box;font-family:InterS;font-size:11px;transform-origin:center;animation:wide .42s cubic-bezier(.2,.85,.25,1.1) both}
+@keyframes wide{from{transform:scaleX(.2);opacity:0}to{transform:none;opacity:1}}
+
+/* цена */
+.old{position:relative;display:inline-block;align-self:flex-start;font-family:InterR;font-size:19px;letter-spacing:-0.03em;color:#a8a29a}
+.old::after{content:"";position:absolute;left:-3px;right:-3px;top:52%;height:2px;background:#151515;transform-origin:left;animation:strike .3s .5s ease-out both}
+@keyframes strike{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.new{display:block;font-family:InterR;font-size:36px;letter-spacing:-0.04em;line-height:1;color:#151515;animation:pop .28s cubic-bezier(.2,.9,.3,1.4) both}
+.badge{position:absolute;right:12px;top:12px;font-family:InterS;font-size:12px;color:#151515;background:#F2DB5A;border-radius:8px;padding:4px 8px;transform:rotate(6deg);animation:bdg .3s cubic-bezier(.2,.9,.3,1.6) both}
+@keyframes bdg{from{transform:rotate(-20deg) scale(.3);opacity:0}to{transform:rotate(6deg);opacity:1}}
+
+/* a/b */
+.v{position:absolute;top:96px;width:124px;height:112px;box-sizing:border-box;padding:10px 12px;background:#fff;border:1px solid #ECE9E2;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.07);display:flex;flex-direction:column;gap:7px;animation:cin2 .4s cubic-bezier(.2,.85,.25,1.12) both}
+.v .lt{width:20px;height:20px;border-radius:50%;background:#151515;color:#fff;font-family:InterS;font-size:11px;display:flex;align-items:center;justify-content:center}
+.v .lnn{height:6px;border-radius:3px;background:#ECE9E2}
+.v .trk{height:8px;border-radius:4px;background:#F1EFEA;overflow:hidden}
+.v .fil{display:block;height:8px;border-radius:4px;background:#151515;transform-origin:left;animation:growx .7s .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes growx{from{transform:scaleX(0)}to{transform:none}}
+.v .m{font-family:InterS;font-size:11px;color:#151515}
+.winb{position:absolute;left:206px;top:84px;font-family:InterS;font-size:10px;color:#151515;background:#F2DB5A;border-radius:7px;padding:3px 7px;animation:pop .3s cubic-bezier(.2,.9,.3,1.6) both}
+.winbox{position:absolute;left:186px;top:96px;width:124px;height:112px;box-sizing:border-box;border:1.5px solid #151515;border-radius:16px}
+
+/* календарь */
+.day{display:flex;flex-direction:column;align-items:center;gap:5px}
+.dl{font-family:InterS;font-size:9px;color:#8a857d}
+.cell{width:28px;height:50px;border-radius:8px;background:#F3F1EC;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;box-sizing:border-box}
+.chip{width:22px;border-radius:5px;font-family:InterS;font-size:7px;line-height:1;padding:4px 0;text-align:center;animation:chip .28s cubic-bezier(.2,.9,.3,1.5) both}
+@keyframes chip{from{transform:translateY(-10px) scale(.6);opacity:0}to{transform:none;opacity:1}}
+
+/* карта */
+.map{position:absolute;left:47px;top:92px;width:266px;height:122px;border-radius:16px;overflow:hidden;background:#ECE9E2;box-shadow:0 10px 26px rgba(0,0,0,.08);animation:cin .4s .1s cubic-bezier(.2,.85,.25,1.12) both}
+.map .rd{position:absolute;background:#fff}
+.map .blk{position:absolute;border-radius:4px;background:#E2DED5}
+.map .zone{position:absolute;left:83px;top:11px;width:100px;height:100px;border-radius:50%;background:rgba(242,219,90,.35);border:1.5px solid #E0C640;box-sizing:border-box;animation:zone .6s .55s cubic-bezier(.2,.8,.2,1) both}
+@keyframes zone{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
+.map .pin{position:absolute;left:123px;top:38px;width:20px;height:26px;animation:drop .5s .25s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes drop{from{transform:translateY(-40px);opacity:0}to{transform:none;opacity:1}}
+.map .mlab{position:absolute;left:10px;bottom:9px;font-family:InterS;font-size:10px;color:#151515;background:#fff;border-radius:7px;padding:3px 7px;animation:pop .25s 1s ease-out both}
+
+/* папка */
+.farea{position:absolute;left:62px;top:94px;width:236px;height:138px}
+.folder{position:absolute;left:146px;top:34px;width:78px;height:60px;animation:pop .3s .1s cubic-bezier(.2,.85,.25,1.3) both}
+.ftab{position:absolute;left:0;top:0;width:32px;height:14px;border-radius:5px 5px 0 0;background:#7fcfdd}
+.fbody{position:absolute;left:0;top:8px;width:78px;height:52px;border-radius:4px 8px 8px 8px;background:#9BE7F2}
+.flbl{position:absolute;left:126px;top:102px;width:118px;text-align:center;font-family:InterS;font-size:11px;color:#3a3835}
+.fclip{position:absolute;width:44px;height:60px;border-radius:6px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,.2);animation:intof 1.6s ease-in-out infinite}
+.fclip img{width:100%;height:100%;object-fit:cover;display:block}
+@keyframes intof{0%{transform:rotate(var(--r));opacity:0}15%{opacity:1}55%{transform:rotate(var(--r));opacity:1}85%{transform:translate(var(--dx),var(--dy)) scale(.3) rotate(0deg);opacity:0}100%{opacity:0}}
+</style>
+</head>
+<body>
+<div id="root"><div id="ins"></div><div id="cap" class="cap"></div></div>
+<script>
+let PLAN = null, curIns = null, curCap = null;
+const E = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const IMG = (p) => p ? `<img src="${E(p)}" alt="">` : '';
+function at(v) { return `data-at="${v}"`; }
+
+/* Каждый шаблон получает d = insert.data, возвращает HTML.
+   Элементы с data-at="сек" появляются в это время от начала вставки,
+   их CSS-анимации запускаются с этого момента. */
+const T = {
+  title(d) {
+    const lines = d.lines || [];
+    return `<div class="ttl">${lines.map((l, i) => `<span class="ln" ${at(l.at ?? (0.2 + i * 0.55))}><span class="${l.accent ? 'ta' : 'tw'}">${E(l.t)}</span></span>`).join('')}</div>`;
+  },
+  cards(d) {
+    const th = d.thumbs || [], tags = d.tags || [];
+    const pos = [[66, 102, -8, .15], [146, 96, 3, .27], [226, 104, 8, .39]];
+    return pos.slice(0, Math.max(1, th.length)).map((p, i) => `<div class="tc" style="left:${p[0]}px;top:${p[1]}px;--r:${p[2]}deg;animation-delay:${p[3]}s">${IMG(th[i])}${tags[i] ? `<span class="tag">${E(tags[i])}</span>` : ''}</div>`).join('');
+  },
+  dark_card(d) {
+    const lines = d.lines || [];
+    return `<div class="dcard">${lines.map((l, i) => `<span class="cl ${l.accent ? 'ca' : 'cw'}" ${at(l.at ?? (0.3 + i * 0.5))}>${E(l.t)}</span>`).join('')}</div>`;
+  },
+  timeline(d) {
+    const hs = [6, 12, 9, 16, 7, 14, 18, 10, 5, 13, 17, 8, 11, 15, 6, 12, 18, 9, 7, 14, 10, 16, 8, 12];
+    const th = (d.thumbs || []).slice(0, 6);
+    return `<div class="win"><div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="wt">${E(d.title || 'мой рилс · v1')}</span></div>
+<div class="ruler"><span>00:00</span><span>00:05</span><span>00:10</span><span>00:15</span><span>00:20</span></div>
+<div class="trk"><span class="tl">A</span><span style="font-family:InterS;font-size:8px;color:#1c1b1a;background:#F2DB5A;padding:3px 6px;border-radius:4px">${E(d.chip || 'ХУК')}</span><span class="wave">${hs.map((h) => `<span style="height:${h}px"></span>`).join('')}</span></div>
+<div class="trk"><span class="tl">B</span><span class="clips">${th.map(IMG).join('')}</span></div><div class="head"></div></div>`;
+  },
+  marker(d) {
+    return `<div class="quote">${E(d.text || '')}<br><span class="hl">${E(d.highlight || '')}</span></div>`;
+  },
+  checklist(d) {
+    const items = d.items || [], a0 = d.first ?? 0.7, st = d.step ?? 0.5;
+    return `<div class="card" style="left:62px;top:92px;width:236px;height:122px;padding:11px 14px"><div class="lbl" style="margin-bottom:4px">${E(d.title || '')}</div>
+${items.slice(0, 4).map((t, i) => `<div class="row"><span class="box"><span class="tick" ${at(a0 + i * st)}><svg viewBox="0 0 15 15" width="15" height="15"><path d="M4 7.6 L6.4 10 L11 5.2" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span>${E(t)}</span></div>`).join('')}</div>`;
+  },
+  chat(d) {
+    return `<div class="card" style="left:55px;top:92px;width:250px;height:122px;padding:10px 12px;display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;align-items:center;gap:6px;font-family:InterS;font-size:12px;color:#151515"><span style="width:10px;height:10px;border-radius:50%;background:#D97757"></span>${E(d.name || 'Claude')}</div>
+<div class="ub" ${at(0.4)}>${E(d.question || '')}</div>
+<div class="dots" ${at(0.8)} data-until="1.6"><span></span><span></span><span></span></div>
+<div class="rep" ${at(1.6)}>${E(d.answer || '')}${d.sub ? `<br><span style="color:#8a857d;font-size:11px">${E(d.sub)}</span>` : ''}</div></div>`;
+  },
+  notifications(d) {
+    const items = (d.items || []).slice(0, 3);
+    return items.map((n, i) => `<div class="nt" style="top:${92 + i * 42}px" ${at(n.at ?? (0.3 + i * 0.6))}><span class="ic ${n.accent ? 'y' : ''}">${E(n.icon || '+')}</span><span><div class="tt">${E(n.title)}</div><div class="sb">${E(n.sub || '')}</div></span><span class="tm">${E(n.time || 'сейчас')}</span></div>`).join('');
+  },
+  chart(d) {
+    const hs = d.bars || [16, 20, 18, 30, 42, 56, 70];
+    const mx = Math.max(...hs);
+    return `<div class="card" style="left:62px;top:92px;width:236px;height:122px;padding:11px 14px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="lbl">${E(d.label || '')}</span><span class="big-s">${E(d.badge || '')}</span></div>
+<div style="display:flex;align-items:flex-end;gap:8px;height:70px;margin-top:6px">${hs.map((h, i) => `<div class="cbar ${i === hs.length - 1 ? 'last' : ''}" style="height:${Math.round(70 * h / mx)}px;animation-delay:${300 + i * 90}ms"></div>`).join('')}</div></div>`;
+  },
+  before_after(d) {
+    const b = d.before || {}, a = d.after || {};
+    return `<div class="tile" style="left:50px;background:#fff;border:1px solid #ECE9E2;animation-delay:.1s"><span class="lbl">${E(b.label || 'было')}</span><span class="nm" style="color:#151515">${E(b.num)}</span><span class="un" style="color:#8a857d">${E(b.unit || '')}</span></div>
+<svg class="arr" viewBox="0 0 28 20" style="position:absolute;left:166px;top:142px;width:28px;height:20px"><path d="M2 10 H24 M17 3 L24 10 L17 17" fill="none" stroke="#151515" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<div class="tile" style="left:198px;background:#151515" ${at(0.9)}><span class="lbl" style="color:#F2DB5A">${E(a.label || 'стало')}</span><span class="nm" style="color:#fff" data-count="${+b.num || 0},${+a.num || 0},0.9,0.8">${E(a.num)}</span><span class="un" style="color:#b9b4ac">${E(a.unit || '')}</span></div>`;
+  },
+  ring(d) {
+    return `<div class="card" style="left:56px;top:92px;width:248px;height:120px;padding:14px;display:flex;align-items:center;gap:14px">
+<div style="position:relative;width:88px;height:88px;flex:none"><svg class="ring" viewBox="0 0 88 88" width="88" height="88"><circle cx="44" cy="44" r="36" fill="none" stroke="#ECE9E2" stroke-width="7"/><circle class="prog" cx="44" cy="44" r="36" fill="none" stroke="#151515" stroke-width="7" stroke-linecap="round"/></svg>
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1"><span style="font-family:InterR;font-size:28px;letter-spacing:-0.04em;color:#151515">${E(d.value)}</span><span class="lbl" style="font-size:10px">${E(d.unit || '')}</span></div></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:InterS;font-size:13px;color:#151515">${E(d.title || '')}</span>${d.old ? `<span style="font-family:InterR;font-size:11px;color:#a8a29a;text-decoration:line-through">${E(d.old)}</span>` : ''}<span style="font-family:InterR;font-size:12px;color:#151515"><span class="mk">${E(d.now || '')}</span></span></div></div>`;
+  },
+  funnel(d) {
+    const rows = (d.rows || []).slice(0, 4), ws = [266, 222, 178, 134], bg = ['#151515', '#3a3835', '#6b6660', '#F2DB5A'], fg = ['#fff', '#fff', '#fff', '#151515'];
+    return `<div style="position:absolute;left:47px;top:94px;width:266px;display:flex;flex-direction:column;gap:6px">${rows.map((r, i) => { const k = i + 4 - rows.length; return `<div class="fn" style="width:${ws[k]}px;background:${bg[k]};color:${fg[k]}" ${at(0.2 + i * 0.4)}><span>${E(r.label)}</span><span>${E(r.value)}</span></div>`; }).join('')}</div>`;
+  },
+  price(d) {
+    return `<div class="card" style="left:62px;top:92px;width:236px;height:120px;padding:13px 16px;display:flex;flex-direction:column;gap:4px"><span class="lbl">${E(d.label || '')}</span><span class="old">${E(d.old || '')}</span>
+<span ${at(0.9)}><span class="new">${E(d.now || '')}</span>${d.badge ? `<span class="badge">${E(d.badge)}</span>` : ''}</span></div>`;
+  },
+  ab(d) {
+    const A = d.a || {}, B = d.b || {};
+    const tile = (x, L, o, dl) => `<div class="v" style="left:${x}px;animation-delay:${dl}s"><span class="lt">${L}</span><span class="lnn" style="width:80%"></span><span class="lnn" style="width:55%"></span><span class="trk"><span class="fil" style="width:${o.fill ?? 50}%"></span></span><span class="m">${E(o.metric || '')}</span></div>`;
+    return tile(50, 'A', A, .1) + tile(186, 'B', B, .22) + `<div ${at(1.3)}><div class="winbox"></div><span class="winb">${E(d.badge || 'победитель')}</span></div>`;
+  },
+  calendar(d) {
+    const days = d.days || ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'], chips = d.chips || days.map(() => 'рилс');
+    return `<div class="card" style="left:47px;top:92px;width:266px;height:120px;padding:11px 14px"><div class="lbl" style="margin-bottom:8px">${E(d.title || '')}</div><div style="display:flex;justify-content:space-between">
+${days.map((l, i) => { const last = i === days.length - 1 && d.last_accent !== false; return `<div class="day"><span class="dl">${E(l)}</span><div class="cell"><span class="chip" ${at(0.4 + i * 0.2)} style="background:${last ? '#F2DB5A' : '#151515'};color:${last ? '#151515' : '#fff'}">${E(chips[i] || '')}</span></div></div>`; }).join('')}</div></div>`;
+  },
+  map(d) {
+    return `<div class="map"><div class="blk" style="left:10px;top:10px;width:54px;height:34px"></div><div class="blk" style="left:10px;top:56px;width:54px;height:56px"></div><div class="blk" style="left:76px;top:10px;width:70px;height:44px"></div><div class="blk" style="left:158px;top:10px;width:98px;height:44px"></div><div class="blk" style="left:76px;top:66px;width:70px;height:46px"></div><div class="blk" style="left:158px;top:66px;width:98px;height:46px"></div>
+<div class="rd" style="left:0;top:54px;width:266px;height:12px"></div><div class="rd" style="left:64px;top:0;width:12px;height:122px"></div><div class="rd" style="left:146px;top:0;width:12px;height:122px"></div><div class="zone"></div>
+<svg class="pin" viewBox="0 0 20 26"><path d="M10 25 C 4 17, 1 13, 1 9 A 9 9 0 0 1 19 9 C 19 13, 16 17, 10 25 Z" fill="#151515"/><circle cx="10" cy="9" r="3.4" fill="#F2DB5A"/></svg><span class="mlab">${E(d.label || '')}</span></div>`;
+  },
+  folder(d) {
+    const th = d.thumbs || [], P = [[6, 10, 150, 40, -8, .3], [24, 70, 132, -14, 6, .6], [74, 36, 84, 14, -3, .9]];
+    return `<div class="farea">${P.slice(0, Math.max(1, th.length)).map((p, i) => `<div class="fclip" style="left:${p[0]}px;top:${p[1]}px;--dx:${p[2]}px;--dy:${p[3]}px;--r:${p[4]}deg;animation-delay:${p[5]}s">${IMG(th[i])}</div>`).join('')}
+<div class="folder"><div class="ftab"></div><div class="fbody"></div></div><div class="flbl">${E(d.label || '')}</div></div>`;
+  }
+};
+
+function init(plan) { PLAN = plan; }
+
+function headTop(t) {
+  const h = PLAN.heads || [];
+  if (!h.length) return 210;
+  let i = 0; while (i < h.length - 1 && h[i + 1][0] <= t) i++;
+  return h[i][1] / 3;
+}
+
+function applyTime(root, lt) {
+  root.querySelectorAll('[data-at]').forEach((el) => {
+    const a = +el.dataset.at, u = el.dataset.until != null ? +el.dataset.until : 1e9;
+    el.style.visibility = (lt >= a && lt < u) ? 'visible' : 'hidden';
+  });
+  root.getAnimations({ subtree: true }).forEach((an) => {
+    const el = an.effect && an.effect.target;
+    const host = el && el.closest ? el.closest('[data-at]') : null;
+    const a = host && root.contains(host) ? +host.dataset.at : 0;
+    an.pause();
+    an.currentTime = Math.max(0, (lt - a) * 1000);
+  });
+  root.querySelectorAll('[data-count]').forEach((el) => {
+    const [a, b, s, dur] = el.dataset.count.split(',').map(Number);
+    const p = Math.min(1, Math.max(0, (lt - s) / dur)), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(a + (b - a) * e).toLocaleString('ru-RU');
+  });
+}
+
+function seek(t) {
+  const insRoot = document.getElementById('ins'), capRoot = document.getElementById('cap');
+  const ins = (PLAN.inserts || []).find((i) => t >= i.start && t < i.end) || null;
+  if (ins !== curIns) { insRoot.innerHTML = ins ? (T[ins.type] ? T[ins.type](ins.data || {}) : '') : ''; curIns = ins; }
+  if (ins) applyTime(insRoot, t - ins.start);
+  const hideCap = ins && ins.type === 'title';
+  const c = hideCap ? null : (PLAN.captions || []).find((c) => t >= c.start && t < c.end) || null;
+  if (c !== curCap) {
+    capRoot.innerHTML = c ? `<span class="pop ${c.accent ? 'a' : 'w'}">${E(c.text)}</span>` : '';
+    curCap = c;
+  }
+  if (ins) { capRoot.className = 'cap ink'; capRoot.style.height = '250px'; }
+  else {
+    capRoot.className = 'cap';
+    let b = headTop(c ? c.start : t) - 12;
+    if (b < 132) b = 525;            // над головой нет места — под подбородок
+    capRoot.style.height = Math.min(b, 300) === b ? b + 'px' : '300px';
+    if (b === 525) capRoot.style.height = '525px';
+  }
+  if (c) applyTime(capRoot, t - c.start);
+  return true;
+}
+</script>
+</body>
+</html>
