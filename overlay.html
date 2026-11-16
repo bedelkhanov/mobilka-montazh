@@ -16,6 +16,8 @@ html,body{margin:0;padding:0;width:360px;height:640px;background:transparent;ove
 .cap{position:absolute;left:53px;right:53px;top:0;display:flex;align-items:flex-end;justify-content:center;text-align:center;line-height:1}
 .w{font-family:InterR;font-weight:400;font-size:30px;letter-spacing:-0.03em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4),0 2px 12px rgba(0,0,0,.35)}
 .a{font-family:SerifC;font-style:italic;font-stretch:62.5%;font-variation-settings:"wdth" 62.5,"wght" 400;font-size:44px;letter-spacing:-0.01em;color:#F2DB5A;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.low .w{text-shadow:0 0 2px rgba(0,0,0,.55),0 1px 3px rgba(0,0,0,.6),0 2px 14px rgba(0,0,0,.55),0 0 28px rgba(0,0,0,.35)}
+.low .a{text-shadow:0 0 2px rgba(0,0,0,.5),0 2px 14px rgba(0,0,0,.55),0 0 28px rgba(0,0,0,.35)}
 .ink .w{color:#151515;text-shadow:none}
 .ink .a{color:#151515;text-shadow:none;background:linear-gradient(transparent 56%,#F2DB5A 56%,#F2DB5A 90%,transparent 90%);padding:0 6px}
 .pop{display:inline-block;animation:pop .16s cubic-bezier(.2,.9,.3,1.35) both}
@@ -306,6 +308,7 @@ function seek(t) {
   }
   const fullB = ins && ins.type === 'broll' && ((ins.data || {}).mode || 'full') === 'full';
   if (fullB) { capRoot.className = 'cap'; capRoot.style.height = '450px'; }   // перебивка на весь экран: белое слово ниже центра (y≈1350)
+  else if (ins && ins._capb) { capRoot.className = 'cap low'; capRoot.style.height = (ins._capb / 3) + 'px'; }   // вставка: слово под подбородком, анимация сверху — не мешают друг другу
   else if (ins) { capRoot.className = 'cap ink'; capRoot.style.height = '250px'; }
   else {
     capRoot.className = 'cap';
